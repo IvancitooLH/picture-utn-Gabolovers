@@ -1,51 +1,15 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
+import useCamera from "../hooks/useCamera";
+import uploadPhoto from "../utils/uploadPhoto";
 
 const CameraComponent: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-
-  useEffect(() => {
-    startCamera();
-    return () => stopCamera(); // Detener cámara al desmontar
-  }, []);
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-      setStream(mediaStream);
-    } catch (error) {
-      console.error("Error al acceder a la cámara:", error);
-    }
-  };
-
-  const takePhoto = () => {
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    if (canvas && video) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        console.log(canvas.toDataURL("image/png"));
-        setPhoto(canvas.toDataURL("image/png"));
-      }
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-  };
+  const { startCamera, stopCamera, takePhoto, photo, stream } = useCamera(
+    videoRef,
+    canvasRef
+  );
+  const [uploading, setUploading] = useState(false);
 
   return (
     <div className="flex flex-col items-center gap-4 p-4">
@@ -56,6 +20,12 @@ const CameraComponent: React.FC = () => {
         playsInline
         className="border rounded-lg shadow-lg w-full max-w-md"
       />
+      <button
+        onClick={startCamera}
+        className="px-4 py-2 bg-green-500 text-white rounded-md"
+      >
+        Iniciar Cámara
+      </button>
       <button
         onClick={takePhoto}
         className="px-4 py-2 bg-blue-500 text-white rounded-md"
@@ -70,11 +40,20 @@ const CameraComponent: React.FC = () => {
       </button>
       <canvas ref={canvasRef} className="hidden" />
       {photo && (
-        <img
-          src={photo}
-          alt="Captura"
-          className="border rounded-lg shadow-lg w-full max-w-md"
-        />
+        <>
+          <img
+            src={photo}
+            alt="Captura"
+            className="border rounded-lg shadow-lg w-full max-w-md"
+          />
+          <button
+            onClick={() => uploadPhoto(photo, setUploading)}
+            disabled={uploading}
+            className="px-4 py-2 bg-green-500 text-white rounded-md"
+          >
+            {uploading ? "Subiendo..." : "Subir a Cloudinary"}
+          </button>
+        </>
       )}
     </div>
   );
