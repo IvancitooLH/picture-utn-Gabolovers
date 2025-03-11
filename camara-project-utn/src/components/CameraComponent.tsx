@@ -33,8 +33,11 @@ const CameraComponent: React.FC = () => {
       if (ctx) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        console.log(canvas.toDataURL("image/png"));
+
+        ctx.translate(canvas.width, 0); // Mover el origen al otro lado
+        ctx.scale(-1, 1); // Reflejar horizontalmente
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         setPhoto(canvas.toDataURL("image/png"));
       }
     }
@@ -54,26 +57,33 @@ const CameraComponent: React.FC = () => {
         ref={videoRef}
         autoPlay
         playsInline
-        className="border rounded-lg shadow-lg w-full max-w-md"
+        className="border rounded-lg shadow-lg w-full max-w-md transform scale-x-[-1]"
       />
       <button
         onClick={takePhoto}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md"
+        className="px-4 py-2 text-white bg-blue-500 rounded-md"
       >
         Capturar Foto
       </button>
+      
       <button
         onClick={stopCamera}
-        className="px-4 py-2 bg-red-500 text-white rounded-md"
+        className="px-4 py-2 text-white bg-red-500 rounded-md"
       >
         Detener Cámara
+      </button>
+      <button
+        onClick={startCamera}
+        className="px-4 py-2 text-white bg-red-500 rounded-md"
+      >
+        Iniciar Cámara
       </button>
       <canvas ref={canvasRef} className="hidden" />
       {photo && (
         <img
           src={photo}
           alt="Captura"
-          className="border rounded-lg shadow-lg w-full max-w-md"
+          className="w-full max-w-md border rounded-lg shadow-lg"
         />
       )}
     </div>
